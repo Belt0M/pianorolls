@@ -1,55 +1,44 @@
+import clsx from 'clsx'
 import { FC, useEffect, useRef, useState } from 'react'
+import { IColor } from '../types/IColor'
 import { IRoll } from '../types/IRoll'
-
-interface Color {
-	r: number
-	g: number
-	b: number
-}
-
-function generateGradientTable(
-	startColor: Color,
-	endColor: Color,
-	steps: number
-): string[] {
-	const gradientTable: string[] = []
-	for (let i = 0; i < steps; i++) {
-		const r = startColor.r + ((endColor.r - startColor.r) * i) / (steps - 1)
-		const g = startColor.g + ((endColor.g - startColor.g) * i) / (steps - 1)
-		const b = startColor.b + ((endColor.b - startColor.b) * i) / (steps - 1)
-		gradientTable.push(
-			`rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`
-		)
-	}
-	console.log(steps, gradientTable)
-	return gradientTable
-}
+import { generateGradientTable } from '../utils/generateGradientTable'
 
 interface Props {
 	sequence: IRoll[]
 	index: number
+	onClick: (index: number | null) => void
+	isSelected: boolean
+	isMainView: boolean
 }
 
-const PianoRoll: FC<Props> = ({ sequence, index }) => {
+const PianoRoll: FC<Props> = ({
+	sequence,
+	index,
+	onClick,
+	isSelected,
+	isMainView,
+}) => {
 	const [svgElement, setSvgElement] = useState<SVGSVGElement | null>(null)
 	const [end, setEnd] = useState<number | null>(null)
 	const [backgroundColormap, setBackgroundColormap] = useState<string[]>([])
 	const [noteColormap, setNoteColormap] = useState<string[]>([])
 	const [noteHeight, setNoteHeight] = useState<number | null>(null)
+	const [heightDivider] = useState<number>(0.7)
 
 	const svgRef = useRef<SVGSVGElement | null>(null)
 
 	useEffect(() => {
 		// PianoRoll brand #5DB5D5
-		const backgroundStartColor: Color = { r: 93, g: 181, b: 213 }
+		const backgroundStartColor: IColor = { r: 93, g: 181, b: 213 }
 		// #154151
-		const backgroundEndColor: Color = { r: 21, g: 65, b: 81 }
+		const backgroundEndColor: IColor = { r: 21, g: 65, b: 81 }
 		setBackgroundColormap(
 			generateGradientTable(backgroundStartColor, backgroundEndColor, 128)
 		)
 
-		const noteStartColor: Color = { r: 66, g: 66, b: 61 }
-		const noteEndColor: Color = { r: 28, g: 28, b: 26 }
+		const noteStartColor: IColor = { r: 66, g: 66, b: 61 }
+		const noteEndColor: IColor = { r: 28, g: 28, b: 26 }
 		setNoteColormap(generateGradientTable(noteStartColor, noteEndColor, 128))
 	}, [])
 
@@ -124,8 +113,8 @@ const PianoRoll: FC<Props> = ({ sequence, index }) => {
 
 			const y = 1 - (note.pitch - pitchMin) / pitchSpan
 
-			noteRectangle.setAttribute('y', `${y}`)
-			noteRectangle.setAttribute('height', `${noteHeight}`)
+			noteRectangle.setAttribute('y', `${y * heightDivider}`)
+			noteRectangle.setAttribute('height', `${noteHeight! * heightDivider}`)
 
 			const color = noteColormap[note.velocity]
 			noteRectangle.setAttribute('fill', color)
@@ -157,9 +146,9 @@ const PianoRoll: FC<Props> = ({ sequence, index }) => {
 				rect.setAttribute('fill', backgroundColormap[12])
 				rect.setAttribute('fill-opacity', '0.666')
 				rect.setAttribute('x', `${x}`)
-				rect.setAttribute('y', `${y}`)
+				rect.setAttribute('y', `${y * heightDivider}`)
 				rect.setAttribute('width', `${w}`)
-				rect.setAttribute('height', `${h}`)
+				rect.setAttribute('height', `${h * heightDivider}`)
 				svgElement.appendChild(rect)
 			}
 
@@ -169,12 +158,12 @@ const PianoRoll: FC<Props> = ({ sequence, index }) => {
 			)
 			const y = 1 - (it - pitchMin) / pitchSpan + 1 / pitchSpan
 			line.setAttribute('x1', '0')
-			line.setAttribute('y1', `${y}`)
+			line.setAttribute('y1', `${y * heightDivider}`)
 			line.setAttribute('x2', '2')
-			line.setAttribute('y2', `${y}`)
+			line.setAttribute('y2', `${y * heightDivider}`)
 
 			const lineWidth = it % 12 === 0 ? 0.003 : 0.001
-			line.setAttribute('stroke-width', `${lineWidth}`)
+			line.setAttribute('stroke-width', `${lineWidth * heightDivider}`)
 			line.setAttribute('stroke', 'black')
 			svgElement.appendChild(line)
 		}
@@ -189,9 +178,18 @@ const PianoRoll: FC<Props> = ({ sequence, index }) => {
 	}, [svgElement, end, sequence, noteHeight])
 
 	return (
-		<div className='w-full h-64 border-2 border-opacity-25 bg-gray-400 bg-opacity-10 text-center py-4 px-12'>
-			<h2 className='font-semibold'>Piano Roll #{index}</h2>
-			<div className='h-44 bg-blue-400 bg-opacity-25 mt-3.5 overflow-y-auto border-2 border-black'>
+		<div
+			className={clsx(
+				isSelected ? 'h-[calc(100vh-8rem)]' : 'group h-48',
+				isMainView && 'min-h-[10rem]',
+				'relative w-full px-4 py-4 overflow-hidden text-center bg-secondary rounded-lg shadow-md'
+			)}
+			onClick={() => onClick(index)}
+		>
+			<div className='absolute inset-0 grid transition-all duration-300 bg-black bg-opacity-50 opacity-0 cursor-pointer group-hover:opacity-100 place-content-center'>
+				<h2 className='font-semibold text-white'>Piano Roll #{index}</h2>
+			</div>
+			<div className='h-full overflow-hidden bg-blue-200 bg-opacity-100 border-2 border-black'>
 				<svg
 					ref={element => {
 						setSvgElement(element)

@@ -7,3 +7,38 @@
 	padding: 0;
 	box-sizing: border-box;
 }
+
+body {
+	background-color: #1c394a;
+}
+
+/* ===== Scrollbar ===== */
+/* Firefox */
+* {
+	scrollbar-width: auto;
+	scrollbar-color: #1c394a #294454;
+}
+
+/* Chrome, Edge, and Safari */
+::-webkit-scrollbar-track {
+	-webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+	background-color: #294454;
+	border-radius: 0.5rem;
+	margin: 0.5rem 0;
+}
+
+::-webkit-scrollbar {
+	width: 0.5rem;
+	background-color: #294454;
+}
+
+::-webkit-scrollbar-thumb {
+	border-radius: 10px;
+	background-image: -webkit-gradient(
+		linear,
+		left bottom,
+		left top,
+		color-stop(0.44, #225c73),
+		color-stop(0.86, #35a3ad)
+	);
+}
