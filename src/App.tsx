@@ -2,6 +2,7 @@ import clsx from 'clsx'
 import { FC, useEffect, useState } from 'react'
 import { TbArrowBackUp } from 'react-icons/tb'
 import PianoRoll from './components/PianoRoll'
+import SelectionTool from './components/SelectionTool'
 import { IRoll } from './types/IRoll'
 
 const App: FC = () => {
@@ -50,13 +51,15 @@ const App: FC = () => {
 					/>
 					<section className='flex justify-between w-full gap-8 px-4 py-8 md:w-5/6 md:px-0'>
 						<div className='flex-[3]'>
-							<PianoRoll
-								sequence={rollsData![selected]}
-								index={selected + 1}
-								onClick={handleSelect}
-								isSelected={true}
-								isMainView={selected !== null}
-							/>
+							<SelectionTool>
+								<PianoRoll
+									sequence={rollsData![selected]}
+									index={selected + 1}
+									onClick={handleSelect}
+									isSelected={true}
+									isMainView={selected !== null}
+								/>
+							</SelectionTool>
 							<h2 className='px-4 py-3 mt-4 font-semibold text-white rounded-md shadow-md bg-secondary'>
 								Piano Roll #{selected + 1}
 							</h2>

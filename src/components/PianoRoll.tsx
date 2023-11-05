@@ -182,11 +182,16 @@ const PianoRoll: FC<Props> = ({
 			className={clsx(
 				isSelected ? 'h-[calc(100vh-8rem)]' : 'group h-48',
 				isMainView && 'min-h-[10rem]',
-				'relative w-full px-4 py-4 overflow-hidden text-center bg-secondary rounded-lg shadow-md'
+				'relative w-full p-4 overflow-hidden text-center bg-secondary rounded-lg shadow-md'
 			)}
 			onClick={() => onClick(index)}
 		>
-			<div className='absolute inset-0 grid transition-all duration-300 bg-black bg-opacity-50 opacity-0 cursor-pointer group-hover:opacity-100 place-content-center'>
+			<div
+				className={clsx(
+					!isSelected && 'cursor-pointer',
+					'absolute inset-0 grid transition-all duration-300 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 place-content-center'
+				)}
+			>
 				<h2 className='font-semibold text-white'>Piano Roll #{index}</h2>
 			</div>
 			<div className='h-full overflow-hidden bg-blue-200 bg-opacity-100 border-2 border-black'>
