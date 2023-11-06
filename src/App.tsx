@@ -1,13 +1,17 @@
 import clsx from 'clsx'
-import { FC, useEffect, useState } from 'react'
+import { FC, useContext, useEffect, useState } from 'react'
 import { TbArrowBackUp } from 'react-icons/tb'
 import PianoRoll from './components/PianoRoll'
-import SelectionTool from './components/SelectionTool'
+import { SelectionContext } from './context/SelectionContext'
+import SelectionTool from './layouts/SelectionTool'
 import { IRoll } from './types/IRoll'
 
 const App: FC = () => {
 	const [rollsData, setRollsData] = useState<IRoll[][] | null>(null)
 	const [selected, setSelected] = useState<number | null>(null)
+
+	const { selectedNotes, setSelectedNotes, setRange } =
+		useContext(SelectionContext)
 
 	// Fetch rolls data
 	useEffect(() => {
@@ -19,6 +23,7 @@ const App: FC = () => {
 			return result.slice(0, arraySize)
 		}
 
+		// In the future can't be init in RTK Query API (currently no reason, only 1 request)
 		const fetchData = async () => {
 			try {
 				const response = await fetch('https://pianoroll.ai/random_notes')
@@ -38,6 +43,9 @@ const App: FC = () => {
 	// Handle on PianoRoll click to set Main element of view
 	const handleSelect = (index: number | null) => {
 		setSelected(index && index - 1)
+		// Remove selection and reset notes counter on other Roll selection
+		setRange({ start: null, end: null })
+		setSelectedNotes(0)
 	}
 
 	return (
@@ -60,9 +68,14 @@ const App: FC = () => {
 									isMainView={selected !== null}
 								/>
 							</SelectionTool>
-							<h2 className='px-4 py-3 mt-4 font-semibold text-white rounded-md shadow-md bg-secondary'>
-								Piano Roll #{selected + 1}
-							</h2>
+							<div className='flex items-center justify-between px-4 py-3 mt-4 font-semibold text-white rounded-md shadow-md bg-secondary'>
+								<h2>Piano Roll #{selected + 1}</h2>
+								<h3>
+									{selectedNotes > 0
+										? `Notes selected: ${selectedNotes}`
+										: 'No notes selected'}
+								</h3>
+							</div>
 						</div>
 						<div className='flex-[1] flex flex-col max-h-[calc(100vh-4rem)] gap-3 overflow-y-auto px-1'>
 							{rollsData?.map(

@@ -1,5 +1,6 @@
 import clsx from 'clsx'
-import { FC, useEffect, useRef, useState } from 'react'
+import { FC, useContext, useEffect, useRef, useState } from 'react'
+import { SelectionContext } from '../context/SelectionContext'
 import { IColor } from '../types/IColor'
 import { IRoll } from '../types/IRoll'
 import { generateGradientTable } from '../utils/generateGradientTable'
@@ -19,14 +20,45 @@ const PianoRoll: FC<Props> = ({
 	isSelected,
 	isMainView,
 }) => {
-	const [svgElement, setSvgElement] = useState<SVGSVGElement | null>(null)
 	const [end, setEnd] = useState<number | null>(null)
 	const [backgroundColormap, setBackgroundColormap] = useState<string[]>([])
 	const [noteColormap, setNoteColormap] = useState<string[]>([])
 	const [noteHeight, setNoteHeight] = useState<number | null>(null)
 	const [heightDivider] = useState<number>(0.7)
 
+	const { range, setSelectedNotes } = useContext(SelectionContext)
+
 	const svgRef = useRef<SVGSVGElement | null>(null)
+
+	// Listening when the selection range is set
+	// If note is fully in selection then mark as selected
+	useEffect(() => {
+		if (isSelected && range) {
+			// console.log('Start: ', range.start, ' End: ', range.end)
+			const notes = svgRef.current?.querySelectorAll('rect.note-rectangle')
+			const filteredNotes = []
+			if (notes && range.end && range.start) {
+				for (const note of notes) {
+					const noteStart = parseFloat(note.getAttribute('x')!)
+					const widthAttribute = parseFloat(note.getAttribute('width')!)
+					const noteEnd = noteStart! + widthAttribute
+
+					// Normalize value from range 132 - 939 to 0 - 1
+					const normalizedEnd = (range.end - 132) / (939 - 131)
+					const normalizedStart = (range.start - 132) / (939 - 131)
+					if (
+						noteStart !== null &&
+						noteEnd <= normalizedEnd &&
+						noteStart >= normalizedStart
+					) {
+						filteredNotes.push(note)
+					}
+				}
+				console.log(filteredNotes)
+				setSelectedNotes(filteredNotes.length)
+			}
+		}
+	}, [range, isSelected, setSelectedNotes])
 
 	useEffect(() => {
 		// PianoRoll brand #5DB5D5
@@ -41,6 +73,14 @@ const PianoRoll: FC<Props> = ({
 		const noteEndColor: IColor = { r: 28, g: 28, b: 26 }
 		setNoteColormap(generateGradientTable(noteStartColor, noteEndColor, 128))
 	}, [])
+
+	useEffect(() => {
+		if (svgRef.current) {
+			svgRef.current.innerHTML = ''
+			drawPianoRoll()
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [svgRef.current, end, sequence, noteHeight])
 
 	useEffect(() => {
 		if (sequence && sequence.length > 0) {
@@ -68,10 +108,12 @@ const PianoRoll: FC<Props> = ({
 		}
 	}, [sequence])
 
+	// Helper function to calculate the x coordinate and width of the note rectangle
 	const timeToX = (time: number): number => time / (end || 1)
 
+	// Draw notes rectangles
 	const drawPianoRoll = () => {
-		if (!svgElement || !end || !sequence || sequence.length === 0) {
+		if (!svgRef.current || !end || !sequence || sequence.length === 0) {
 			return
 		}
 
@@ -97,14 +139,17 @@ const PianoRoll: FC<Props> = ({
 		pitchSpan = pitchMax - pitchMin
 		setNoteHeight(1 / pitchSpan)
 
+		// Generate two color "grid" with octaves and pitch borders
 		drawEmptyPianoRoll(pitchMin, pitchMax)
 
+		// Iterate over all notes and generate Piano Roll notes rectangles
 		sequence.forEach(note => {
 			const noteRectangle = document.createElementNS(
 				'http://www.w3.org/2000/svg',
 				'rect'
 			)
 
+			// Note Rectangle x position
 			const x = timeToX(note.start - sequence[0].start)
 			const w = timeToX(note.end - note.start)
 
@@ -121,18 +166,23 @@ const PianoRoll: FC<Props> = ({
 
 			noteRectangle.classList.add('note-rectangle')
 
-			svgElement.appendChild(noteRectangle)
+			svgRef.current?.appendChild(noteRectangle)
 		})
 	}
 
+	// Generate two color "grid" with octaves and pitch borders
 	const drawEmptyPianoRoll = (pitchMin: number, pitchMax: number) => {
-		if (!svgElement) {
+		if (!svgRef.current) {
 			return
 		}
 
 		const pitchSpan = pitchMax - pitchMin
+		// Iterate over all pitches
 		for (let it = pitchMin; it <= pitchMax + 1; it++) {
 			// Black keys
+			// Add another color rectangle for each second row
+			// Probably should be [1, 3, 5, 7, 9, 11] or [0, 2, 4, 6, 8, 10]
+			// But in example was that one [1, 3, 6, 8, 10]
 			if ([1, 3, 6, 8, 10].includes(it % 12)) {
 				const rect = document.createElementNS(
 					'http://www.w3.org/2000/svg',
@@ -149,7 +199,7 @@ const PianoRoll: FC<Props> = ({
 				rect.setAttribute('y', `${y * heightDivider}`)
 				rect.setAttribute('width', `${w}`)
 				rect.setAttribute('height', `${h * heightDivider}`)
-				svgElement.appendChild(rect)
+				svgRef.current.appendChild(rect)
 			}
 
 			const line = document.createElementNS(
@@ -162,20 +212,13 @@ const PianoRoll: FC<Props> = ({
 			line.setAttribute('x2', '2')
 			line.setAttribute('y2', `${y * heightDivider}`)
 
+			// Octave line
 			const lineWidth = it % 12 === 0 ? 0.003 : 0.001
 			line.setAttribute('stroke-width', `${lineWidth * heightDivider}`)
 			line.setAttribute('stroke', 'black')
-			svgElement.appendChild(line)
+			svgRef.current.appendChild(line)
 		}
 	}
-
-	useEffect(() => {
-		if (svgElement) {
-			svgElement.innerHTML = ''
-			drawPianoRoll()
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [svgElement, end, sequence, noteHeight])
 
 	return (
 		<div
@@ -186,6 +229,7 @@ const PianoRoll: FC<Props> = ({
 			)}
 			onClick={() => onClick(index)}
 		>
+			{/* In grid view on hover show overlay */}
 			<div
 				className={clsx(
 					!isSelected && 'cursor-pointer',
@@ -194,15 +238,9 @@ const PianoRoll: FC<Props> = ({
 			>
 				<h2 className='font-semibold text-white'>Piano Roll #{index}</h2>
 			</div>
+			{/* Main Piano Roll SVG */}
 			<div className='h-full overflow-hidden bg-blue-200 bg-opacity-100 border-2 border-black'>
-				<svg
-					ref={element => {
-						setSvgElement(element)
-						svgRef.current = element
-					}}
-					viewBox='0 0 1 1'
-					preserveAspectRatio='none'
-				/>
+				<svg ref={svgRef} viewBox='0 0 1 1' preserveAspectRatio='none' />
 			</div>
 		</div>
 	)
