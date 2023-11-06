@@ -1,6 +1,7 @@
 import clsx from 'clsx'
 import { FC, useContext, useEffect, useState } from 'react'
 import { TbArrowBackUp } from 'react-icons/tb'
+import Navbar from './components/Navbar'
 import PianoRoll from './components/PianoRoll'
 import { SelectionContext } from './context/SelectionContext'
 import SelectionTool from './layouts/SelectionTool'
@@ -49,72 +50,77 @@ const App: FC = () => {
 	}
 
 	return (
-		<main className='relative flex justify-center'>
-			{selected !== null ? (
-				// Main view
-				<>
-					<TbArrowBackUp
-						className='absolute p-3 text-5xl text-white transition-all rounded-full cursor-pointer top-6 left-6 bg-secondary hover:brightness-110'
-						onClick={() => handleSelect(null)}
-					/>
-					<section className='flex justify-between w-full gap-8 px-4 py-8 md:w-5/6 md:px-0'>
-						<div className='flex-[3]'>
-							<SelectionTool>
-								<PianoRoll
-									sequence={rollsData![selected]}
-									index={selected + 1}
-									onClick={handleSelect}
-									isSelected={true}
-									isMainView={selected !== null}
-								/>
-							</SelectionTool>
-							<div className='flex items-center justify-between px-4 py-3 mt-4 font-semibold text-white rounded-md shadow-md bg-secondary'>
-								<h2>Piano Roll #{selected + 1}</h2>
-								<h3>
-									{selectedNotes > 0
-										? `Notes selected: ${selectedNotes}`
-										: 'No notes selected'}
-								</h3>
-							</div>
-						</div>
-						<div className='flex-[1] flex flex-col max-h-[calc(100vh-4rem)] gap-3 overflow-y-auto px-1'>
-							{rollsData?.map(
-								(roll, index) =>
-									index !== selected && (
-										<PianoRoll
-											key={index}
-											sequence={roll}
-											index={index + 1}
-											onClick={handleSelect}
-											isSelected={false}
-											isMainView={selected !== null}
-										/>
-									)
-							)}
-						</div>
-					</section>
-				</>
-			) : (
-				// Grid view
-				<section
-					className={clsx(
-						selected ? 'flex' : 'grid grid-cols-3',
-						'w-full gap-4 px-4 py-8 md:w-5/6 md:px-0'
-					)}
-				>
-					{rollsData?.map((roll, index) => (
-						<PianoRoll
-							key={index}
-							sequence={roll}
-							index={index + 1}
-							onClick={handleSelect}
-							isSelected={selected === index}
-							isMainView={selected !== null}
+		<>
+			<Navbar setSelected={handleSelect} />
+			<main className='relative flex justify-center mt-12'>
+				{selected !== null ? (
+					// Main view
+					<>
+						<TbArrowBackUp
+							className='absolute p-3 text-5xl text-white transition-all rounded-full cursor-pointer top-6 left-6 bg-secondary hover:brightness-110 z-[90]'
+							onClick={() => handleSelect(null)}
 						/>
-					))}
-				</section>
-			)}
-		</main>
+						<section className='flex lg:flex-row flex-col lg:justify-between w-full gap-8 px-4 py-8 md:w-5/6 md:px-0 max-h-[calc(100vh-3.8rem)]'>
+							<div className='flex-[3]'>
+								<SelectionTool>
+									<PianoRoll
+										sequence={rollsData![selected]}
+										index={selected + 1}
+										onClick={handleSelect}
+										isSelected={true}
+										isMainView={selected !== null}
+									/>
+								</SelectionTool>
+								<div className='flex items-center justify-between px-4 py-3 mt-4 font-semibold text-white rounded-md shadow-md bg-secondary'>
+									<h2>Piano Roll #{selected + 1}</h2>
+									<h3>
+										{selectedNotes > 0
+											? `Notes selected: ${selectedNotes}`
+											: 'No notes selected'}
+									</h3>
+								</div>
+							</div>
+							<div className='lg:flex-[1] lg:w-full lg:flex grid sm:grid-cols-2 grid-cols-1 flex-col max-h-[calc(100vh-4rem)] gap-3 overflow-y-auto px-1 mt-2'>
+								{rollsData?.map(
+									(roll, index) =>
+										index !== selected && (
+											<PianoRoll
+												key={index}
+												sequence={roll}
+												index={index + 1}
+												onClick={handleSelect}
+												isSelected={false}
+												isMainView={selected !== null}
+											/>
+										)
+								)}
+							</div>
+						</section>
+					</>
+				) : (
+					// Grid view
+					<section
+						className={clsx(
+							selected
+								? 'flex'
+								: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
+							'w-full gap-4 px-4 py-8 md:w-5/6 md:px-0'
+						)}
+					>
+						{rollsData?.map((roll, index) => (
+							<PianoRoll
+								key={index}
+								sequence={roll}
+								index={index + 1}
+								onClick={handleSelect}
+								isSelected={selected === index}
+								isMainView={selected !== null}
+							/>
+						))}
+					</section>
+				)}
+			</main>
+		</>
 	)
 }
 

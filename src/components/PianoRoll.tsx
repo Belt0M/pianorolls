@@ -34,18 +34,20 @@ const PianoRoll: FC<Props> = ({
 	// If note is fully in selection then mark as selected
 	useEffect(() => {
 		if (isSelected && range) {
-			// console.log('Start: ', range.start, ' End: ', range.end)
 			const notes = svgRef.current?.querySelectorAll('rect.note-rectangle')
 			const filteredNotes = []
 			if (notes && range.end && range.start) {
 				for (const note of notes) {
 					const noteStart = parseFloat(note.getAttribute('x')!)
 					const widthAttribute = parseFloat(note.getAttribute('width')!)
-					const noteEnd = noteStart! + widthAttribute
+					const temp = noteStart! + widthAttribute
+					const noteEnd = temp >= 1 ? 0.995 : temp
 
 					// Normalize value from range 132 - 939 to 0 - 1
-					const normalizedEnd = (range.end - 132) / (939 - 131)
-					const normalizedStart = (range.start - 132) / (939 - 131)
+					const normalizedEnd = (range.end - 131) / (940 - 131)
+					const normalizedStart = (range.start - 131) / (940 - 131)
+					console.log(noteStart, noteEnd)
+					console.log(normalizedStart, normalizedEnd)
 					if (
 						noteStart !== null &&
 						noteEnd <= normalizedEnd &&
@@ -54,7 +56,7 @@ const PianoRoll: FC<Props> = ({
 						filteredNotes.push(note)
 					}
 				}
-				console.log(filteredNotes)
+				console.log('Selected notes: ', filteredNotes)
 				setSelectedNotes(filteredNotes.length)
 			}
 		}
@@ -223,7 +225,11 @@ const PianoRoll: FC<Props> = ({
 	return (
 		<div
 			className={clsx(
-				isSelected ? 'h-[calc(100vh-8rem)]' : 'group h-48',
+				isSelected
+					? 'aspect-video mt-2'
+					: isMainView
+					? 'h-44'
+					: 'group md:h-48 h-60',
 				isMainView && 'min-h-[10rem]',
 				'relative w-full p-4 overflow-hidden text-center bg-secondary rounded-lg shadow-md'
 			)}
